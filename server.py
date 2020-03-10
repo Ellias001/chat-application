@@ -1,13 +1,15 @@
 import socket
 import select
 
-HEADER_LENGTH = 10
-IP = "127.0.0.1"
-PORT = 8000
-
 class Server:
-    def __init__(self, server_socket):
-        self.server_socket = server_socket
+    def __init__(self, IP = '127.0.0.1', PORT = 8000, HEADER_LENGTH = 10):
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.bind((IP, PORT))
+
+        self.server_socket.listen(5)
+
+        self.HEADER_LENGTH = HEADER_LENGTH
         self.sockets_list = [server_socket]
         self.clients = {} # cliet socket is key and user data (username) will be the value
 
@@ -23,7 +25,7 @@ class Server:
 
     def recieve_data(self, client_socket):
         try:
-            header = client_socket.recv(HEADER_LENGTH)
+            header = client_socket.recv(self.HEADER_LENGTH)
             if not len(header):
                 return False
 
@@ -59,22 +61,21 @@ class Server:
         self.sockets_list.remove(client_socket)
         del self.clients[client_socket]
 
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server_socket.bind((IP, PORT))
 
-server_socket.listen(5)
+def main():
+    server = Server()
 
-server = Server(server_socket)
-
-while True:
-    # readable, writable, exceptional = select.select(inputs, outputs, inputs)
-    read_sockets, _, exception_sockets = select.select(server.sockets_list, [], server.sockets_list)
+    while True:
+        # readable, writable, exceptional = select.select(inputs, outputs, inputs)
+        read_sockets, _, exception_sockets = select.select(server.sockets_list, [], server.sockets_list)
     
-    for notified_socket in read_sockets:
-        if notified_socket is server_socket:
-            server.accept_connection()
-        else:
-            server.recieve_send_message(notified_socket)
+        for notified_socket in read_sockets:
+            if notified_socket is server_socket:
+                server.accept_connection()
+            else:
+                server.recieve_send_message(notified_socket)
     
-    server.delete_exception_sockets(exception_sockets)
+        server.delete_exception_sockets(exception_sockets)
+
+if __name__ == '__main__':
+    main()
