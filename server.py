@@ -10,7 +10,7 @@ class Server:
         self.server_socket.listen(5)
 
         self.HEADER_LENGTH = HEADER_LENGTH
-        self.sockets_list = [server_socket]
+        self.sockets_list = [self.server_socket]
         self.clients = {} # cliet socket is key and user data (username) will be the value
 
     def accept_connection(self):
@@ -40,9 +40,9 @@ class Server:
             if message is False:
                 return
 
-            user = self.clients[notified_socket]
+            user = self.clients[client_socket]
             print(f"Recieved message from {user['data'].decode('utf-8')}: {message['data'].decode('utf-8')}")
-            self.send_message(notified_socket, user, message)
+            self.send_message(client_socket, user, message)
         except:
             return
 
@@ -70,7 +70,7 @@ def main():
         read_sockets, _, exception_sockets = select.select(server.sockets_list, [], server.sockets_list)
     
         for notified_socket in read_sockets:
-            if notified_socket is server_socket:
+            if notified_socket is server.server_socket:
                 server.accept_connection()
             else:
                 server.recieve_send_message(notified_socket)
