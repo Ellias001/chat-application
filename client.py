@@ -1,20 +1,26 @@
-import sys
 import socket
 import select
 import errno
+import sys
 
 class Client:
     def __init__(self, IP = '127.0.0.1', PORT = 8000, HEADER_LENGTH = 10):
-        self.username = input("Username: ")
+        try:
+            self._create_socket(IP, PORT)
+        except:
+            print("Client socket creation failed")
+            sys.exit()
 
+        self.HEADER_LENGTH = HEADER_LENGTH
+        self.username = input("Username: ").encode('utf-8')
+        self.username_header = f"{len(self.username):<{self.HEADER_LENGTH}}".encode('utf-8')
+        self.client_socket.send(self.username_header + self.username)
+    
+    def _create_socket(self, IP, PORT):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((IP, PORT))
         self.client_socket.setblocking(False) # recv() won't be blocked
 
-        self.HEADER_LENGTH = HEADER_LENGTH
-        self.username_header = f"{len(self.username):<{self.HEADER_LENGTH}}".encode('utf-8')
-        self.client_socket.send(self.username_header + self.username.encode('utf-8'))
-    
     def send_message(self, message):
         if message == '':
             return
@@ -42,7 +48,7 @@ def main():
     client = Client()
 
     while True:
-        client.send_message(input(f"{client.username} > "))
+        client.send_message(input(f"{client.username.decode('utf-8')} > "))
         try:
             while True:
                 client.recieve_message()
