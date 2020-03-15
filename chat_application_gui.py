@@ -1,4 +1,5 @@
 import tkinter
+import threading
 import client
 
 class ChatWindow:
@@ -18,6 +19,10 @@ class ChatWindow:
     def init_client_socket(self, event):
         username = self.username_entry.get()
         self.client_socket = client.Client(username)
+        
+        self.t = threading.Thread(target = self.receive)
+        self.t.start()
+
         self.username_entry.unbind('<Return>')
         self.init_main_window()
 
@@ -26,9 +31,9 @@ class ChatWindow:
         scrollbar = tkinter.Scrollbar(messages_frame)  # To navigate through past messages.
 
         scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-        msg_list = tkinter.Listbox(messages_frame, height=15, width=50, yscrollcommand=scrollbar.set)
-        msg_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
-        msg_list.pack()
+        self.msg_list = tkinter.Listbox(messages_frame, height=15, width=50, yscrollcommand=scrollbar.set)
+        self.msg_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
+        self.msg_list.pack()
 
         messages_frame.pack()
 
@@ -41,15 +46,21 @@ class ChatWindow:
     def send(self, event = None):
         message = self.message_entry.get()
         self.client_socket.send_message(message)
-                
+
+    def receive(self):
+        while True:
+            message = self.client_socket.recieve_message()
+            self.msg_list.insert(tkinter.END, message)
+
 def main():
     root = tkinter.Tk()
     root.title("Chat app")
     root.geometry('400x600')
 
     window = ChatWindow(root)
+    #root.protocol("WM_DELETE_WINDOW", window.on_closing)
 
-    tkinter.mainloop()  # Starts GUI execution.
+    tkinter.mainloop()  # Starts GUI execution
 
 if __name__ == '__main__':
     main()
