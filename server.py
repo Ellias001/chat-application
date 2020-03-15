@@ -1,29 +1,37 @@
 import socket
 import select
+import sys
 
 class Server:
     def __init__(self, IP = '127.0.0.1', PORT = 8000, HEADER_LENGTH = 10):
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server_socket.bind((IP, PORT))
-
-        self.server_socket.listen(5)
+        try:
+            self._create_socket(IP, PORT)
+        except:
+            print("Server socket creation failed")
+            sys.exit()
 
         self.HEADER_LENGTH = HEADER_LENGTH
         self.sockets_list = [self.server_socket]
         self.clients = {} # cliet socket is key and user data (username) will be the value
 
+    def _create_socket(self, IP, PORT):
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.bind((IP, PORT))
+        self.server_socket.listen(5)
+
     def accept_connection(self):
         client_socket, client_address = self.server_socket.accept()
-        user = self.recieve_data(client_socket)
+        user = self._recieve_data(client_socket)
+
         if user is False:
             return
-        else:
-            self.sockets_list.append(client_socket)
-            self.clients[client_socket] = user
-            print(f"Accepted new connection from {client_address}")
 
-    def recieve_data(self, client_socket):
+        self.sockets_list.append(client_socket)
+        self.clients[client_socket] = user
+        print(f"Accepted new connection from {client_address}")
+
+    def _recieve_data(self, client_socket):
         try:
             header = client_socket.recv(self.HEADER_LENGTH)
             if not len(header):
@@ -36,7 +44,7 @@ class Server:
 
     def recieve_send_message(self, client_socket):
         try:
-            message = self.recieve_data(client_socket)
+            message = self._recieve_data(client_socket)
             if message is False:
                 return
 
@@ -49,6 +57,7 @@ class Server:
     def send_message(self, notified_socket, user, message):
         for client_socket in self.clients:
             if client_socket is not notified_socket:
+                print(f'Sending message from {user["data"].decode("utf-8")} to {self.clients[client_socket]["data"].decode("utf-8")}')
                 client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
 
     def delete_exception_sockets(self, exception_sockets):
