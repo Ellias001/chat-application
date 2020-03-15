@@ -4,7 +4,7 @@ import errno
 import sys
 
 class Client:
-    def __init__(self, IP = '127.0.0.1', PORT = 8000, HEADER_LENGTH = 10):
+    def __init__(self, username, IP = '127.0.0.1', PORT = 8000, HEADER_LENGTH = 10):
         try:
             self._create_socket(IP, PORT)
         except:
@@ -12,14 +12,14 @@ class Client:
             sys.exit()
 
         self.HEADER_LENGTH = HEADER_LENGTH
-        self.username = input("Username: ").encode('utf-8')
+        self.username = username.encode('utf-8')
         self.username_header = f"{len(self.username):<{self.HEADER_LENGTH}}".encode('utf-8')
         self.client_socket.send(self.username_header + self.username)
+        self.send_message("Greeting Server!!!")
     
     def _create_socket(self, IP, PORT):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((IP, PORT))
-        self.client_socket.setblocking(False) # recv() won't be blocked
 
     def send_message(self, message):
         if message == '':
@@ -40,8 +40,8 @@ class Client:
         message_header = self.client_socket.recv(self.HEADER_LENGTH)
         message_length = int(message_header.decode('utf-8'))
         message = self.client_socket.recv(message_length).decode('utf-8')
-
-        print(f"{username} > {message}")
+    
+        return f'{username} : {message}'
 
 
 def main():
