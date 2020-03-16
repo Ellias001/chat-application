@@ -50,6 +50,11 @@ class Server:
 
             user = self.clients[client_socket]
             print(f"Recieved message from {user['data'].decode('utf-8')}: {message['data'].decode('utf-8')}")
+            
+            if message['data'].decode('utf-8') == 'Leaving...server':
+                self.close_connection(client_socket)
+                return
+            
             self.send_message(client_socket, user, message)
         except:
             return
@@ -57,7 +62,6 @@ class Server:
     def send_message(self, notified_socket, user, message):
         for client_socket in self.clients:
             if client_socket is not notified_socket:
-                print(f'Sending message from {user["data"].decode("utf-8")} to {self.clients[client_socket]["data"].decode("utf-8")}')
                 client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
 
     def delete_exception_sockets(self, exception_sockets):
@@ -66,9 +70,10 @@ class Server:
             del self.cliets[notified_socket]
 
     def close_connection(self, client_socket):
-        print(f"Connection from {self.clients[notified_socket]} is closed")
         self.sockets_list.remove(client_socket)
         del self.clients[client_socket]
+        client_socket.close()
+        return
 
 
 def main():
