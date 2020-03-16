@@ -31,7 +31,6 @@ class Client:
     def recieve_message(self):
         username_header = self.client_socket.recv(self.HEADER_LENGTH)
         if not len(username_header):
-            print("Connection closed by the server")
             sys.exit()
 
         username_length = int(username_header.decode('utf-8'))
